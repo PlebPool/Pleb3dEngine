@@ -4,7 +4,7 @@
 
 #include "../headers/graph_algorithms.h"
 
-void graph_algorithms::bresenhamLine(POINT &p1, POINT &p2, COLORREF **buf, COLORREF &color)
+void graph_algorithms::bresenhamLine(POINT &p1, POINT &p2, COLORREF buf[512][512], COLORREF &color)
 {
     int x,y,dx,dy,dx1,dy1,px,py,xe,ye,i;
     dx=p2.x-p1.x;dy=p2.y-p1.y;

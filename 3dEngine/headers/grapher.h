@@ -8,11 +8,18 @@
 
 class Grapher {
 private:
-    COLORREF color;
-    COLORREF** buf;
+    COLORREF _color;
+    COLORREF _buf[512][512]={{0}};
+    int _width;
+    int _height;
 public:
-    Grapher(COLORREF color, COLORREF **buf);
-    void drawLineBetweenPoints(POINT &p1, POINT &p2, HDC deviceContext);
+    Grapher(COLORREF color, int width, int height);
+    void drawLineBetweenPoints(POINT &p1, POINT &p2, HDC &deviceContext);
+
+    virtual ~Grapher();
+
+private:
+    void flush(HDC &deviceContext);
 };
 
 

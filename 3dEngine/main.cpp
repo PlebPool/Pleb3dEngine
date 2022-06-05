@@ -4,6 +4,7 @@
 #include <thread>
 #include <chrono>
 #include <vector>
+#include "headers/grapher.h"
 
 int BACKGROUND_COLOR = BLACK_BRUSH;
 
@@ -97,26 +98,34 @@ void paintWindow(HWND &windowHandle)
             else{moving--;}
         }
 
-        COLORREF buf[width][height] = {{0}};
+        COLORREF buf[height][width] = {{0}};
+
+//        auto** buf = new COLORREF*[height];
+//        for (int i = 0; i < height; i++)
+//        {
+//            buf[i] = new COLORREF[width];
+//        }
+//        Grapher grapher = Grapher(color, width, height);
 
         POINT p1 = {100+moving,100+moving};
         POINT p2 = {200-moving,200-moving};
         POINT p3 = {300+moving,50+moving};
 
+//        grapher.drawLineBetweenPoints(p1, p2, contextHandle);
         bresenhamLine(p1, p2, buf);
         bresenhamLine(p2, p3, buf);
         bresenhamLine(p1, p3, buf);
 
-        for (int i = 0; i < height; i++)
+        for (int i = 0; i < width; i++)
         {
             buf[0][i] = RGB(0,0,0xFF);
             buf[height-1][i] = RGB(0,0,0xFF);
         }
 
-        for (auto & i : buf)
+        for (int i = 0; i < height; i++)
         {
-            i[0] = RGB(0,0,0xFF);
-            i[width-1] = RGB(0,0,0xFF);
+            buf[i][0] = RGB(0,0,0xFF);
+            buf[i][width-1] = RGB(0,0,0xFF);
         }
 
         HBITMAP map = CreateBitmap(
@@ -141,6 +150,11 @@ void paintWindow(HWND &windowHandle)
 
         DeleteObject(map);
         DeleteDC(src);
+//        for (int i = 0; i < height; i++)
+//        {
+//            delete [] buf[i];
+//        }
+//        delete [] buf;
     }
 }
 

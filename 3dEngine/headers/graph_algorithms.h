@@ -9,7 +9,7 @@
 
 namespace graph_algorithms
 {
-    void bresenhamLine(POINT &p1, POINT &p2, COLORREF **buf, COLORREF &color);
+    void bresenhamLine(POINT &p1, POINT &p2, COLORREF buf[512][512], COLORREF &color);
 };
 
 
