@@ -1,18 +1,10 @@
 #include <iostream>
 #include <windows.h>
-#include <cmath>
 #include <thread>
 #include <chrono>
-#include <vector>
-#include "headers/grapher.h"
 
-int BACKGROUND_COLOR = BLACK_BRUSH;
-
-int moveItBy = 100;
-
-POINT one{moveItBy+0,moveItBy+0};
-POINT two{moveItBy+100,moveItBy+200};
-POINT three{moveItBy+200,moveItBy+100};
+#include "headers/graphing_algorithms.h"
+#include "headers/graphing_structs.h"
 
 const int width = 512;
 const int height = 512;
@@ -21,86 +13,9 @@ HDC contextHandle;
 
 long moving = 0;
 
-COLORREF colors[] = {
-        RGB(0xFF, 0, 0),
-        RGB(0, 0xFF, 0),
-        RGB(0, 0, 0xFF)
-};
-
-std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
-std::chrono::system_clock::time_point lastFrame = std::chrono::system_clock::now();
-
 COLORREF color = RGB(0xff, 0x0, 0x0);
 
-// Bresenham line algorithm.
-void bresenhamLine(POINT p1, POINT p2, COLORREF* buf)
-{
-    int x,y,dx,dy,dx1,dy1,px,py,xe,ye,i;
-    dx=p2.x-p1.x;dy=p2.y-p1.y;
-    dx1=abs(dx);dy1=abs(dy);
-    px=2*dy1-dx1;py=2*dx1-dy1;
-    if(dy1<=dx1)
-    {
-        if(dx>=0){x=p1.x;y=p1.y;xe=p2.x;}
-        else{x=p2.x;y=p2.y;xe=p1.x;}
-        buf[y*height+x]=color;
-        for(i=0;x<xe;i++)
-        {
-            color++;
-            x=x+1;
-            if(px<0){px=px+2*dy1;}
-            else
-            {
-                if((dx<0&&dy<0)||(dx>0&&dy>0)){y=y+1;}
-                else{y=y-1;}
-                px=px+2*(dy1-dx1);
-            }
-            buf[y*height+x]=color;
-        }
-    }
-    else
-    {
-        if(dy>=0){x=p1.x;y=p1.y;ye=p2.y;}
-        else{x=p2.x;y=p2.y;ye=p1.y;}
-        buf[y*height+x]=color;
-        for(i=0;y<ye;i++)
-        {
-            color++;
-            y=y+1;
-            if(py<=0){py=py+2*dx1;}
-            else
-            {
-                if((dx<0&&dy<0)||(dx>0&&dy>0)){x=x+1;}
-                else{x=x-1;}
-                py=py+2*(dx1-dy1);
-            }
-            buf[y*height+x]=color;
-        }
-    }
-}
-
-struct vec2d
-{
-    float x,y;
-    vec2d(float x, float y) : x(x), y(y) {}
-    POINT getAsPoint() const
-    {
-        return POINT{(long)x, (long)y};
-    }
-};
-
-struct vec3d
-{
-    float x,y,z;
-    vec3d(float _x, float _y, float _z, float midHeight, float midWidth) : z(_z) {
-        x = _x+midWidth;
-        y = _y+midHeight;
-    }
-    [[nodiscard]] POINT getAs2d() const
-    {
-        return POINT{(long)x,(long)y};
-    }
-};
+long long count = 0;
 
 bool bIncrease = true;
 void paintWindow(HWND &windowHandle)
@@ -109,6 +24,7 @@ void paintWindow(HWND &windowHandle)
     if (GetWindowRect(windowHandle, &rect))
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
+//        std::cout << ++count << std::endl;
         if (bIncrease)
         {
             if (moving >= (100))
@@ -121,80 +37,24 @@ void paintWindow(HWND &windowHandle)
             else{moving--;}
         }
 
-//        COLORREF buf[height][width] = {{0}};
-
-//        auto* buffer = new COLORREF[height*width];
-
         COLORREF buffer[height*width]={0};
 
-//        auto** buf = new COLORREF*[height];
-//        for (int i = 0; i < height; i++)
-//        {
-//            buf[i] = new COLORREF[width];
-//        }
-//        Grapher grapher = Grapher(color, width, height);
+        POINT midPoint{width / 2, height / 2};
 
-        // Cube
+        graphing_structs::Vec2d a(-2 * 38, 2 * 38, midPoint);
+        graphing_structs::Vec2d b(2 * 38, 2 * 38, midPoint);
+        graphing_structs::Vec2d c(-2 * 38, -2 * 38, midPoint);
+        graphing_structs::Vec2d d(2 * 38, -2 * 38, midPoint);
 
-//        std::cout << buffer[131072];
+        graphing_algorithms::bresenhamLine(a, b, buffer, height, width, color);
+        graphing_algorithms::bresenhamLine(b, c, buffer, height, width, color);
+        graphing_algorithms::bresenhamLine(c, a, buffer, height, width, color);
 
-        vec2d midPoint{(float)width/2, (float)height/2};
+        graphing_algorithms::bresenhamLine(d, b, buffer, height, width, color);
+        graphing_algorithms::bresenhamLine(b, c, buffer, height, width, color);
+        graphing_algorithms::bresenhamLine(c, d, buffer, height, width, color);
 
-        vec3d a{150,100,50, midPoint.y, midPoint.x};
-        vec3d b{-150,100,50, midPoint.y, midPoint.x};
-        vec3d c{150,-100,50, midPoint.y, midPoint.x};
-        vec3d d{-150,-100,50, midPoint.y, midPoint.x};
-
-        vec3d e{200,75,-100, midPoint.y, midPoint.x};
-        vec3d f{-75,75,-100, midPoint.y, midPoint.x};
-        vec3d g{200,-120,-100, midPoint.y, midPoint.x};
-        vec3d h{-75,-120,-100, midPoint.y, midPoint.x};
-
-        // AB, CD, EF, GH, AC, BD, EG, FH, AE, CG, BF, DH
-        bresenhamLine(a.getAs2d(), b.getAs2d(), buffer);
-        bresenhamLine(c.getAs2d(), d.getAs2d(), buffer);
-        bresenhamLine(e.getAs2d(), f.getAs2d(), buffer);
-        bresenhamLine(g.getAs2d(), h.getAs2d(), buffer);
-        bresenhamLine(a.getAs2d(), c.getAs2d(), buffer);
-        bresenhamLine(b.getAs2d(), d.getAs2d(), buffer);
-        bresenhamLine(e.getAs2d(), g.getAs2d(), buffer);
-        bresenhamLine(f.getAs2d(), h.getAs2d(), buffer);
-        bresenhamLine(a.getAs2d(), e.getAs2d(), buffer);
-        bresenhamLine(c.getAs2d(), g.getAs2d(), buffer);
-        bresenhamLine(b.getAs2d(), f.getAs2d(), buffer);
-        bresenhamLine(d.getAs2d(), h.getAs2d(), buffer);
-
-        for (int i = 0; i < width; i++)
-        {
-            buffer[(width-1)*height+i] = RGB(0,0,0xFF);
-            buffer[i] = RGB(0,0,0xFF);
-        }
-
-        for (int i = 0; i < height; i++)
-        {
-            buffer[i*width] = RGB(0,0,0xFF);
-            buffer[i*width-1] = RGB(0,0,0xFF);
-        }
-
-        vec2d topLeft{0,0};
-        vec2d topRight{width-1,0};
-        vec2d bottomLeft{0, height-1};
-        vec2d bottomRight{width-1, height-1};
-
-//        bresenhamLine(topLeft.getAsPoint(), d.getAs2d(), buffer); // D
-//        bresenhamLine(a.getAs2d(), bottomRight.getAsPoint(), buffer);
-//        bresenhamLine(topRight.getAsPoint(), c.getAs2d(), buffer);
-//        bresenhamLine(bottomLeft.getAsPoint(), b.getAs2d(), buffer);
-
-
-//        POINT p1 = {100+moving,100+moving};
-//        POINT p2 = {200-moving,200-moving};
-//        POINT p3 = {300+moving,50+moving};
-
-//        grapher.drawLineBetweenPoints(p1, p2, contextHandle);
-//        bresenhamLine(p1, p2, buffer);
-//        bresenhamLine(p2, p3, buffer);
-//        bresenhamLine(p1, p3, buffer);
+        graphing_algorithms::paintBorder(buffer, RGB(0xff,0xff,0xff), height, width);
 
         HBITMAP map = CreateBitmap(
                 width,
@@ -218,17 +78,6 @@ void paintWindow(HWND &windowHandle)
 
         DeleteObject(map);
         DeleteDC(src);
-
-//        SetPixel(contextHandle, topLeft.x, topLeft.y, RGB(0x0,0x0,0xFF));
-//        SetPixel(contextHandle, topRight.x, topRight.y, RGB(0x0,0x0,0xFF));
-//        SetPixel(contextHandle, bottomLeft.x, bottomLeft.y, RGB(0x0,0x0,0xFF));
-//        SetPixel(contextHandle, bottomRight.x, bottomRight.y, RGB(0x0,0x0,0xFF));
-
-//        for (int i = 0; i < height; i++)
-//        {
-//            delete [] buf[i];
-//        }
-//        delete [] buf;
     }
 }
 
@@ -236,8 +85,7 @@ LRESULT CALLBACK windowProcess(HWND windowHandle, UINT msg, WPARAM wParam, LPARA
 {
     switch (msg)
     {
-//        case WM_KEYDOWN: // X button.
-        case WM_CLOSE:
+        case WM_CLOSE: // X
             DestroyWindow(windowHandle); return 0;
         case WM_DESTROY:
             PostQuitMessage(0); return 0;
